@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seu consumo</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+
+
+<body>
+  <form onsubmit="buscarInformacoes(); return false;">
+  <div class="cont">
+    <h1>Consumo de Agua</h1>
+  </div>
+    <input type="number" id="numeroInput" name="numeroInput"/>
+    <button type="submit">Confirme sua Matricula</button>
+  
+  </form>
+  <div id="resultado"></div>
+
+  <div>
+    <input type="number" id="porcentagemInput" min="1" max="100" style="display: inline-block; width: 150px;" />
+    <button id="calcularPorcentagemButton" class="calcular-button" onclick="calcularEconomia();">Porcentagem que deseja economizar por mês</button>
+  </div>
+  
+  <div>
+    <label for="valorAtualizadoInput">Valor em R$ Atualizado:</label>
+<input type="text" id="valorAtualizadoInput" disabled style="display: inline-block; width: 150px;" />
+  </div>
+
+  <div>
+    <button class="calcular-button" onclick="calcularEconomiaAnual();">Clique para saber quanto economizará</button>
+    <span id="economiaResultado"></span>
+  </div>
+  
+  <script>
+    var matrizDados = []; // Matriz para armazenar os dados
+
+    function buscarInformacoes() {
+      var numero = document.getElementById("numeroInput").value;
+
+      // Fazendo a leitura do arquivo JSON
+      fetch('resultados.json')
+        .then(response => response.json())
+        .then(data => {
+          // Acessando os dados do arquivo JSON
+          var linhaEncontrada = data.find(function(linha) {
+            return linha.Matricula == numero;
+          });
+
+          // Exibir as informações encontradas na página
+          if (linhaEncontrada) {
+            matrizDados.push([
+              linhaEncontrada.Bairro,
+              linhaEncontrada.Janeiro,
+              linhaEncontrada.Fevereiro,
+              linhaEncontrada.Marco,
+              linhaEncontrada.Abril,
+              linhaEncontrada.Maio,
+              linhaEncontrada.Junho,
+              linhaEncontrada.Julho,
+              linhaEncontrada.Agosto,
+              linhaEncontrada.Setembro,
+              linhaEncontrada.Outubro,
+              linhaEncontrada.Novembro,
+              linhaEncontrada.Dezembro,
+              linhaEncontrada['Valor Anual']
+            ]);
+
+            var resultado = "Bairro: " + linhaEncontrada.Bairro + "<br>";
+            resultado += "Janeiro: " + linhaEncontrada.Janeiro + "<br>";
+            resultado += "Fevereiro: " + linhaEncontrada.Fevereiro + "<br>";
+            resultado += "Março: " + linhaEncontrada.Marco + "<br>";
+            resultado += "Abril: " + linhaEncontrada.Abril + "<br>";
+            resultado += "Maio: " + linhaEncontrada.Maio + "<br>";
+            resultado += "Junho: " + linhaEncontrada.Junho + "<br>";
+            resultado += "Julho: " + linhaEncontrada.Julho + "<br>";
+            resultado += "Agosto: " + linhaEncontrada.Agosto + "<br>";
+            resultado += "Setembro: " + linhaEncontrada.Setembro + "<br>";
+            resultado += "Outubro: " + linhaEncontrada.Outubro + "<br>";
+            resultado += "Novembro: " + linhaEncontrada.Novembro + "<br>";
+            resultado += "Dezembro: " + linhaEncontrada.Dezembro + "<br>";
+            resultado += "Valor Anual: " + linhaEncontrada['Valor Anual'];
+
+            document.getElementById("resultado").innerHTML = resultado;
+          } else {
+            document.getElementById("resultado").innerText = "Nenhuma informação encontrada para o número digitado.";
+          }
+        })
+        .catch(error => {
+          console.error('Erro ao ler o arquivo JSON:', error);
+        });
+    }
+
+    function calcularEconomia() {
+  var valorEconomia = parseFloat(document.getElementById("porcentagemInput").value);
+
+  // Subtrair o número 1 da porcentagem
+  valorEconomia = 1 - (valorEconomia / 100);
+
+  var novaMatriz = [];
+
+  if (!isNaN(valorEconomia) && matrizDados.length > 0) {
+    for (var i = 0; i < matrizDados.length; i++) {
+      var linha = matrizDados[i];
+      var novaLinha = [];
+
+      novaLinha.push(linha[0]); // Copia o Bairro para a nova linha
+
+      for (var j = 1; j <= 12; j++) {
+        var economia = linha[j] * valorEconomia;
+        novaLinha.push(economia.toFixed(2)); // Limita o resultado a duas casas decimais
+      }
+
+      novaLinha.push(linha[13]); // Copia o Valor Anual para a nova linha
+
+      novaMatriz.push(novaLinha); // Adiciona a nova linha à matriz
+    }
+
+    matrizDados = novaMatriz; // Substitui a matriz original pela nova matriz
+    exibirMatriz();
+    document.getElementById("calcularPorcentagemButton").disabled = true;
+
+  }
+}
+
+function calcularContaAgua(consumo) {
+  var preco1 = 29.92; // Preço até 10m³
+  var preco2 = 5.48;  // Preço de 11 a 25m³
+  var preco3 = 7.69;  // Preço de 26 a 50m³
+  var preco4 = 9.21;  // Preço acima de 50m³
+
+  var total = 0;
+
+  if (consumo <= 10) {
+    total = preco1;
+  } else if (consumo <= 25) {
+    total = preco1 + preco2 * (consumo - 10);
+  } else if (consumo <= 50) {
+    total = preco1 + preco2 * 15 + preco3 * (consumo - 25);
+  } else {
+    total = preco1 + preco2 * 15 + preco3 * 25 + preco4 * (consumo - 50);
+  }
+
+  return total;
+}
+
+function exibirMatriz() {
+  var tabela = "<table><tr><th>Bairro</th><th>Janeiro</th><th>Fevereiro</th><th>Março</th><th>Abril</th><th>Maio</th><th>Junho</th><th>Julho</th><th>Agosto</th><th>Setembro</th><th>Outubro</th><th>Novembro</th><th>Dezembro</th><th>Valor Anual</th></tr>";
+
+  for (var i = 0; i < matrizDados.length; i++) {
+    var linha = matrizDados[i];
+
+    tabela += "<tr>";
+    for (var j = 0; j < linha.length; j++) {
+      if (j >= 1 && j <= 12) { // Aplica o cálculo da conta de água para cada valor de consumo do mês
+        var consumo = linha[j];
+        var contaAgua = calcularContaAgua(consumo);
+        tabela += "<td>" + contaAgua.toFixed(2) + "</td>"; // Limita o resultado a duas casas decimais
+      } else {
+        tabela += "<td>" + linha[j] + "</td>";
+      }
+    }
+    tabela += "</tr>";
+  }
+
+  tabela += "</table>";
+
+document.getElementById("resultado").innerHTML = tabela;
+
+calcularValorAtualizado();
+}
+
+function calcularValorAtualizado() {
+  var soma = 0;
+
+  for (var i = 0; i < matrizDados.length; i++) {
+    var linha = matrizDados[i];
+
+    for (var j = 1; j <= 12; j++) {
+      var consumo = linha[j];
+      soma += calcularContaAgua(consumo);
+    }
+  }
+  document.getElementById("valorAtualizadoInput").value = soma.toFixed(2);
+}
+
+function calcularEconomiaAnual() {
+  var valorAnual = 0;
+
+  for (var i = 0; i < matrizDados.length; i++) {
+    var linha = matrizDados[i];
+    valorAnual += parseFloat(linha[13]);
+  }
+
+  var valorAtualizado = parseFloat(document.getElementById("valorAtualizadoInput").value);
+  var economia = valorAnual - valorAtualizado;
+
+  document.getElementById("economiaResultado").textContent = "Economia: " + economia.toFixed(2);
+}
+  </script>
+</body>
+</html>
